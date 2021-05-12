@@ -1,10 +1,11 @@
 use crate as pallet_template;
-use sp_core::H256;
+use sp_core::hash::H256;
 use frame_support::parameter_types;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup}, testing::Header,
 };
 use frame_system as system;
+use frame_support::traits::Randomness;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -53,6 +54,7 @@ impl system::Config for Test {
 
 impl pallet_template::Config for Test {
 	type Event = Event;
+	// type RandomnessSource = Randomness<u128>;
 }
 
 // Build genesis storage according to the mock runtime.
