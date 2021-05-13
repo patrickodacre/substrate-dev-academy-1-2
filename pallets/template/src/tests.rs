@@ -39,6 +39,23 @@ fn can_get_kitty_owner() {
 }
 
 #[test]
+fn owner_can_have_zero_kitties() {
+    new_test_ext().execute_with(|| {
+        // can test using a default empty vec
+        // let kitties = TemplateModule::owner_to_kitties(&1).unwrap_or(Vec::<Option<Kitty>>::new());
+        // println!("no kitties :: {:?}", kitties);
+
+        // or do something likes this::
+        match TemplateModule::owner_to_kitties(&1) {
+            Some(_kitties) => {
+                panic!("There should not be any kitties");
+            }
+            None => {}
+        }
+    });
+}
+
+#[test]
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {
         // Dispatch a signed extrinsic.
