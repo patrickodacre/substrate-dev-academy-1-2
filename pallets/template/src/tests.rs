@@ -6,14 +6,14 @@ use frame_support::{assert_noop, assert_ok};
 fn can_create_kitty() {
     new_test_ext().execute_with(|| {
         assert_ok!(TemplateModule::create_kitty(Origin::signed(1)));
-        let kitty = TemplateModule::owner_to_kitties(&1).unwrap();
-        let kitty1 = (&kitty[0]).as_ref().unwrap();
+        let kitties = TemplateModule::owner_to_kitties(&1).unwrap();
+        let kitty1 = (&kitties[0]).as_ref().unwrap();
         println!("{:?}", kitty1);
         assert_eq!(kitty1.id, 1);
 
         assert_ok!(TemplateModule::create_kitty(Origin::signed(1)));
-        let kitty = TemplateModule::owner_to_kitties(&1).unwrap();
-        let kitty2 = (&kitty[1]).as_ref().unwrap();
+        let kitties = TemplateModule::owner_to_kitties(&1).unwrap();
+        let kitty2 = (&kitties[1]).as_ref().unwrap();
         println!("{:?}", kitty2);
         assert_eq!(kitty2.id, 2);
 
