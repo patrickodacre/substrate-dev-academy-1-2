@@ -98,7 +98,6 @@ pub mod pallet {
             // https://substrate.dev/docs/en/knowledgebase/runtime/origin
             let who = ensure_signed(origin)?;
 
-            // is this our first kitty?
             let number_of_kitties = NumberOfKitties::<T>::get().unwrap_or(0);
             let id = number_of_kitties
                 .checked_add(1)
