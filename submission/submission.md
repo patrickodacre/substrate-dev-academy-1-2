@@ -1,0 +1,14 @@
+# pallet-kitties
+- Calls
+  - `create_kitty`
+- Storages
+  - `Kitties: StorageMap u64 => Option<Kitty>`
+  - `NumberOfKitties: StorageValue<_, u64>`
+  - `OwnerToKitties: StorageMap AccountId => Vec<u64>`
+  - `KittyToOwner: StorageMap u64 => AccountId`
+- Types
+  - `struct Kitty {dna: [u8; 16]}`
+- Events
+  - `KittyCreated`
+    - `kitty_id: u64`
+    - `who: AccountId`
