@@ -46,8 +46,8 @@ pub mod pallet {
     #[derive(Encode, Decode, Clone, PartialEq, Eq)]
     #[cfg_attr(feature = "std", derive(Debug))]
     pub struct Kitty {
-        id: u64,
-        dna: [u8; 16],
+        pub id: u64,
+        pub dna: [u8; 16],
     }
 
     // The pallet's runtime storage items.
@@ -87,7 +87,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// An example dispatchable that takes a singles value as a parameter, writes the value to
         /// storage and emits an event. This function must be dispatched by a signed extrinsic.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
+        #[pallet::weight(10_000 + T::DbWeight::get().writes(2))]
         pub fn create_kitty(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             // Check that the extrinsic was signed and get the signer.
             // This function will return an error if the extrinsic is not signed.
@@ -95,6 +95,9 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             let nonce = Self::encode_and_update_nonce()?;
+
+            <Nonce<T>>::put(nonce);
+
             // twox_128 and blake2_128 seem to be interchangeable
             // let dna = twox_128(&nonce.to_be_bytes());
             let dna = blake2_128(&nonce.to_be_bytes());
@@ -119,7 +122,7 @@ pub mod pallet {
 
     impl<T: Config> Pallet<T> {
         fn encode_and_update_nonce() -> Result<u64, Error<T>> {
-            let current_nonce = <Nonce<T>>::get().unwrap_or(1);
+            let current_nonce = <Nonce<T>>::get().unwrap_or(0);
 
             // return an error to fail the transaction if we can't increment the nonce
             match current_nonce.checked_add(1) {
