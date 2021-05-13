@@ -79,6 +79,7 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         NoneValue,
+        CreateKittyFailed,
     }
 
     #[pallet::hooks]
@@ -99,22 +100,24 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             let number_of_kitties = NumberOfKitties::<T>::get().unwrap_or(0);
-            let id = number_of_kitties
-                .checked_add(1)
-                .expect("Cannot increment number of kitties");
 
-            let dna = (id, &who).using_encoded(blake2_128);
+            match number_of_kitties.checked_add(1) {
+                None => Err(Error::<T>::CreateKittyFailed)?,
+                Some(id) => {
+                    let dna = (id, &who).using_encoded(blake2_128);
 
-            let kitty = Kitty { dna };
+                    let kitty = Kitty { dna };
 
-            Kitties::<T>::insert(id, Some(&kitty));
-            OwnerToKitties::<T>::append(&who, id);
-            KittyToOwner::<T>::insert(id, &who);
-            NumberOfKitties::<T>::put(id);
+                    Kitties::<T>::insert(id, Some(&kitty));
+                    OwnerToKitties::<T>::append(&who, id);
+                    KittyToOwner::<T>::insert(id, &who);
+                    NumberOfKitties::<T>::put(id);
 
-            Self::deposit_event(Event::KittyCreated(id, who));
+                    Self::deposit_event(Event::KittyCreated(id, who));
 
-            Ok(().into())
+                    Ok(().into())
+                }
+            }
         }
     }
 }
