@@ -42,23 +42,28 @@ pub mod pallet {
     #[derive(Encode, Decode, Clone, PartialEq, Eq)]
     #[cfg_attr(feature = "std", derive(Debug))]
     pub struct Kitty {
-        pub id: u64,
         pub dna: [u8; 16],
     }
 
     // The pallet's runtime storage items.
     // https://substrate.dev/docs/en/knowledgebase/runtime/storage
     #[pallet::storage]
-    #[pallet::getter(fn nonce)]
-    pub type Nonce<T: Config> = StorageValue<_, u64>;
+    #[pallet::getter(fn number_of_kitties)]
+    pub type NumberOfKitties<T: Config> = StorageValue<_, u64>;
+
+    #[pallet::storage]
+    #[pallet::getter(fn kitties)]
+    /// kitty_id => Some(kitty)
+    pub type Kitties<T: Config> = StorageMap<_, Blake2_128Concat, u64, Option<Kitty>>;
 
     #[pallet::storage]
     #[pallet::getter(fn owner_to_kitties)]
-    pub type OwnerToKitties<T: Config> =
-        StorageMap<_, Blake2_128Concat, T::AccountId, Vec<Option<Kitty>>>;
+    /// AccountId => kitty_id
+    pub type OwnerToKitties<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Vec<u64>>;
 
     #[pallet::storage]
     #[pallet::getter(fn kitty_to_owner)]
+    /// kitty_id => AccountId
     pub type KittyToOwner<T: Config> = StorageMap<_, Blake2_128Concat, u64, T::AccountId>;
 
     // Pallets use events to inform users when important changes are made.
@@ -74,7 +79,6 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
         NoneValue,
-        NonceFailed,
     }
 
     #[pallet::hooks]
@@ -87,45 +91,31 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// An example dispatchable that takes a singles value as a parameter, writes the value to
         /// storage and emits an event. This function must be dispatched by a signed extrinsic.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(3))]
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,4))]
         pub fn create_kitty(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             // Check that the extrinsic was signed and get the signer.
             // This function will return an error if the extrinsic is not signed.
             // https://substrate.dev/docs/en/knowledgebase/runtime/origin
             let who = ensure_signed(origin)?;
 
-            let nonce = Self::encode_and_update_nonce()?;
+            // is this our first kitty?
+            let number_of_kitties = NumberOfKitties::<T>::get().unwrap_or(0);
+            let id = number_of_kitties
+                .checked_add(1)
+                .expect("Cannot increment number of kitties");
 
-            <Nonce<T>>::put(nonce);
+            let dna = (id, &who).using_encoded(blake2_128);
 
-            // twox_128 and blake2_128 seem to be interchangeable
-            // let dna = twox_128(&nonce.to_be_bytes());
-            let dna = blake2_128(&nonce.to_be_bytes());
+            let kitty = Kitty { dna };
 
-            // example of 256 bit hash using the Hash type configured for the runtime
-            // let dna = T::Hashing::hash_of(&nonce.to_be_bytes()).as_ref();
-            debug::info!("{:?}", dna);
+            Kitties::<T>::insert(id, Some(&kitty));
+            OwnerToKitties::<T>::append(&who, id);
+            KittyToOwner::<T>::insert(id, &who);
+            NumberOfKitties::<T>::put(id);
 
-            let kitty = Kitty { id: nonce, dna };
-
-            OwnerToKitties::<T>::append(&who, Some(&kitty));
-            KittyToOwner::<T>::insert(kitty.id, &who);
-
-            Self::deposit_event(Event::KittyCreated(nonce, who));
+            Self::deposit_event(Event::KittyCreated(id, who));
 
             Ok(().into())
-        }
-    }
-
-    impl<T: Config> Pallet<T> {
-        fn encode_and_update_nonce() -> Result<u64, Error<T>> {
-            let current_nonce = <Nonce<T>>::get().unwrap_or(0);
-
-            // return an error to fail the transaction if we can't increment the nonce
-            match current_nonce.checked_add(1) {
-                Some(nonce) => Ok(nonce),
-                None => Err(Error::NonceFailed),
-            }
         }
     }
 }

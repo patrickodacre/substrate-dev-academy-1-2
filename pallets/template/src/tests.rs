@@ -6,18 +6,22 @@ use frame_support::{assert_noop, assert_ok};
 fn can_create_kitty() {
     new_test_ext().execute_with(|| {
         assert_ok!(TemplateModule::create_kitty(Origin::signed(1)));
+        let number_of_kitties = TemplateModule::number_of_kitties().unwrap();
+        assert_eq!(number_of_kitties, 1);
+
         let kitties = TemplateModule::owner_to_kitties(&1).unwrap();
-        let kitty1 = (&kitties[0]).as_ref().unwrap();
-        println!("{:?}", kitty1);
-        assert_eq!(kitty1.id, 1);
+        let kitty_id = (&kitties.get(0)).unwrap();
+        println!("{:?}", kitty_id);
+        assert_eq!(kitty_id, &1);
 
         assert_ok!(TemplateModule::create_kitty(Origin::signed(1)));
-        let kitties = TemplateModule::owner_to_kitties(&1).unwrap();
-        let kitty2 = (&kitties[1]).as_ref().unwrap();
-        println!("{:?}", kitty2);
-        assert_eq!(kitty2.id, 2);
+        let number_of_kitties = TemplateModule::number_of_kitties().unwrap();
+        assert_eq!(number_of_kitties, 2);
 
-        assert_ne!(kitty1.dna, kitty2.dna);
+        let kitties = TemplateModule::owner_to_kitties(&1).unwrap();
+        let kitty_id = (&kitties.get(1)).unwrap();
+        println!("{:?}", kitty_id);
+        assert_eq!(kitty_id, &2);
     });
 }
 
@@ -26,15 +30,39 @@ fn can_get_kitty_owner() {
     new_test_ext().execute_with(|| {
         assert_ok!(TemplateModule::create_kitty(Origin::signed(1)));
 
-        let kitties = TemplateModule::owner_to_kitties(&1).expect("no kitties");
+        let kitty_id: u64 = 1;
+        let expected_owner_id: u64 = 1;
+        let owner: u64 = TemplateModule::kitty_to_owner(&kitty_id).unwrap();
+        assert_eq!(owner, expected_owner_id);
+    });
+}
 
-        let kitty = (&kitties[0]).as_ref().unwrap();
-        assert_eq!(kitty.id, 1);
+#[test]
+fn can_get_owners_kitties() {
+    new_test_ext().execute_with(|| {
+        let owner_id: u64 = 1;
 
-        let owner = TemplateModule::kitty_to_owner(kitty.id).expect("no owner");
+        assert_ok!(TemplateModule::create_kitty(Origin::signed(owner_id)));
+        let kitties = TemplateModule::owner_to_kitties(&owner_id).unwrap();
+        assert_eq!(kitties.len(), 1);
 
-        println!("owner :: {:?}", owner);
-        assert_eq!(owner, 1);
+        assert_ok!(TemplateModule::create_kitty(Origin::signed(owner_id)));
+        let kitties = TemplateModule::owner_to_kitties(&owner_id).unwrap();
+        assert_eq!(kitties.len(), 2);
+    });
+}
+
+#[test]
+fn can_get_number_of_kitties() {
+    new_test_ext().execute_with(|| {
+        let owner_id = 1;
+        assert_ok!(TemplateModule::create_kitty(Origin::signed(owner_id)));
+        assert_ok!(TemplateModule::create_kitty(Origin::signed(owner_id)));
+        assert_ok!(TemplateModule::create_kitty(Origin::signed(owner_id)));
+
+        let number_of_kitties = TemplateModule::number_of_kitties().unwrap();
+
+        assert_eq!(number_of_kitties, 3);
     });
 }
 
