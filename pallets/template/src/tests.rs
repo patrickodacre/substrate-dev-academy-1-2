@@ -22,6 +22,23 @@ fn can_create_kitty() {
 }
 
 #[test]
+fn can_get_kitty_owner() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(TemplateModule::create_kitty(Origin::signed(1)));
+
+        let kitties = TemplateModule::owner_to_kitties(&1).expect("no kitties");
+
+        let kitty = (&kitties[0]).as_ref().unwrap();
+        assert_eq!(kitty.id, 1);
+
+        let owner = TemplateModule::kitty_to_owner(kitty.id).expect("no owner");
+
+        println!("owner :: {:?}", owner);
+        assert_eq!(owner, 1);
+    });
+}
+
+#[test]
 fn it_works_for_default_value() {
     new_test_ext().execute_with(|| {
         // Dispatch a signed extrinsic.
