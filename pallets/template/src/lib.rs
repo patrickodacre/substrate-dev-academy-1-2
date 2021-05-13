@@ -16,21 +16,17 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-    // use codec::{Codec};
-    // use frame_support::Hashable;
-    // use sp_runtime::traits::Hash;
     use frame_support::traits::Vec;
     use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
     use frame_system::pallet_prelude::*;
+
+    // must import this if you want to use T::Hashing::hash or hash_of
     // use sp_runtime::traits::Hash;
+
     // sp_core::hashing can't be imported
+    // docs recommend using sp_io::hashing which is made available
+    // through the magic of macros
     use sp_io::hashing::blake2_128;
-    // use sp_io::Hashing;
-    // keeping these here for reference later
-    // use sp_core::hashing::twox_128;
-    // use frame_support::traits::Randomness;
-    // use sp_runtime::traits::Hash;
-    // use sp_std::str::from_utf8;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
@@ -105,16 +101,12 @@ pub mod pallet {
             // twox_128 and blake2_128 seem to be interchangeable
             // let dna = twox_128(&nonce.to_be_bytes());
             let dna = blake2_128(&nonce.to_be_bytes());
+
+            // example of 256 bit hash using the Hash type configured for the runtime
             // let dna = T::Hashing::hash_of(&nonce.to_be_bytes()).as_ref();
-            // let hash = Blake2_128Concat::from_ref(&dna);
             debug::info!("{:?}", dna);
 
-            // T::Hash::<Blake2_128Concat>::hash(&nonce.to_be_bytes());
-
-            let kitty = Kitty {
-                id: nonce,
-                dna: dna,
-            };
+            let kitty = Kitty { id: nonce, dna };
 
             OwnerToKitties::<T>::append(&who, Some(&kitty));
             KittyToOwner::<T>::insert(kitty.id, &who);
