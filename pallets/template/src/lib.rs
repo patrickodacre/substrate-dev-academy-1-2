@@ -16,7 +16,7 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	// use codec::{Codec};
+    // use codec::{Codec};
     // use frame_support::Hashable;
     // use sp_runtime::traits::Hash;
     use frame_support::traits::Vec;
